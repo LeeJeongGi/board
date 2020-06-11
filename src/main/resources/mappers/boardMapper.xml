@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.spring.board.boardMapper">
+
+	<select id="getBoardCnt" parameterType="com.spring.board.form.BoardForm" resultType="int">
+	
+		SELECT COUNT(*)
+		FROM PUSER.TB_BOARD
+		WHERE 	BOARD_WRITER = #{board_writer}
+	</select>
+	
+	<select id="getBoardList" parameterType="com.spring.board.form.BoardForm" resultType="com.spring.board.dto.BoardDto">
+	
+		SELECT BOARD_SEQ 
+				, BOARD_RE_REF 
+				, BOARD_RE_LEV 
+				, BOARD_RE_SEQ 
+				, BOARD_WRITER 
+				, BOARD_SUBJECT 
+				, BOARD_CONTENT 
+				, BOARD_HITS
+				, DEL_YN 
+				, INS_USER_ID
+				, CAST( DATE_FORMAT( INS_DATE, '%Y-%m-%d %H:%i:%s' ) AS CHAR(19) ) AS INS_DATE
+				, UPD_USER_ID
+				, CAST( DATE_FORMAT( UPD_DATE, '%Y-%m-%d %H:%i:%s' ) AS CHAR(19) ) AS UPD_DATE  
+			 FROM PUSER.TB_BOARD
+		     WHERE 	BOARD_WRITER = #{board_writer}  
+		     ORDER BY BOARD_RE_REF DESC, BOARD_RE_SEQ ASC
+			LIMIT #{limit} OFFSET #{offset}
+	
+	</select>
+	
+	<delete id="updateBoardHits" parameterType="com.spring.board.form.BoardForm">
+	
+		UPDATE PUSER.TB_BOARD 
+		   SET BOARD_HITS = BOARD_HITS + 1		     
+		     , UPD_USER_ID = 'NONMEMBER'
+		     , UPD_DATE = NOW()
+ 		WHERE BOARD_SEQ = #{board_seq}
+	
+	</delete>
+	
+	<select id="getBoardDetail" parameterType="com.spring.board.form.BoardForm" resultType="com.spring.board.dto.BoardDto">
+	
+		SELECT BOARD_SEQ 
+				, BOARD_RE_REF 
+				, BOARD_RE_LEV 
+				, BOARD_RE_SEQ 
+				, BOARD_WRITER 
+				, BOARD_SUBJECT 
+				, BOARD_CONTENT 
+				, BOARD_HITS
+				, DEL_YN 
+				, INS_USER_ID
+				, CAST( DATE_FORMAT( INS_DATE, '%Y-%m-%d %H:%i:%s' ) AS CHAR(19) ) AS INS_DATE
+				, UPD_USER_ID
+				, CAST( DATE_FORMAT( UPD_DATE, '%Y-%m-%d %H:%i:%s' ) AS CHAR(19) ) AS UPD_DATE  
+		FROM PUSER.TB_BOARD
+		WHERE BOARD_SEQ = #{board_seq}		
+		     	
+	
+	</select>
+		
+	<select id="getBoardFileList" parameterType="com.spring.board.form.BoardFileForm" resultType="com.spring.board.dto.BoardFileDto">
+	
+				SELECT BOARD_SEQ
+					 , FILE_NO
+					 , FILE_NAME_KEY
+					 , FILE_NAME
+					 , FILE_PATH
+					 , FILE_SIZE
+					 , REMARK
+			     	, INS_USER_ID
+					, CAST( DATE_FORMAT( INS_DATE, '%Y-%m-%d %H:%i:%s' ) AS CHAR(19) ) AS INS_DATE
+					, UPD_USER_ID
+					, CAST( DATE_FORMAT( UPD_DATE, '%Y-%m-%d %H:%i:%s' ) AS CHAR(19) ) AS UPD_DATE
+				FROM TB_BOARD_FILE
+				WHERE BOARD_SEQ = #{board_seq}
+				AND DEL_YN = 'N'
+			
+	</select>
+	
+	<select id="getBoardReRef" parameterType="com.spring.board.form.BoardForm" resultType="int">
+	
+		SELECT IFNULL(MAX(BOARD_RE_REF), 0) + 1
+		FROM PUSER.TB_BOARD
+	
+	</select>
+	
+	<insert id="insertBoard" parameterType="com.spring.board.form.BoardForm">
+		
+		<selectKey resultType="int" keyProperty="board_seq" order="AFTER">
+
+			SELECT LAST_INSERT_ID()
+
+		</selectKey>
+		
+		INSERT 
+		INTO PUSER.TB_BOARD 
+		(
+		  	  BOARD_RE_REF
+		  	, BOARD_RE_LEV
+		  	, BOARD_RE_SEQ
+		  	, BOARD_WRITER
+		  	, BOARD_SUBJECT
+		  	, BOARD_CONTENT
+		  	, INS_DATE
+		  	, UPD_USER_ID
+		  	, UPD_DATE
+		) 
+		VALUES 
+		(
+			  #{board_re_ref}
+			, 0
+			, 0
+			, #{board_writer}
+			, #{board_subject}
+			, #{board_content}
+			, NOW() 
+			, 'NONMEMBER'
+			, NOW() 
+		)
+			
+	</insert>
+	
+	<insert id="insertBoardFile" parameterType="com.spring.board.form.BoardFileForm">
+	
+		<selectKey resultType="int" keyProperty="file_no" order="BEFORE">
+			
+			SELECT IFNULL(MAX(FILE_NO), 0) + 1 
+			FROM PUSER.TB_BOARD_FILE
+			WHERE BOARD_SEQ = #{board_seq}
+			  
+		</selectKey>
+				
+		INSERT 
+		INTO TB_BOARD_FILE
+		(
+			  BOARD_SEQ
+			, FILE_NO
+			, FILE_NAME_KEY
+			, FILE_NAME
+			, FILE_PATH
+			, FILE_SIZE
+			, DEL_YN 
+			, INS_USER_ID
+			, INS_DATE			
+			, UPD_USER_ID
+			, UPD_DATE
+		)
+		VALUES
+		(
+			  #{board_seq}
+			, #{file_no}
+			, #{file_name_key}
+			, #{file_name}
+			, #{file_path}
+			, #{file_size}
+			, 'N'
+			, 'NONMEMBER'
+			, NOW() 
+			, 'NONMEMBER'
+			, NOW() 
+		)	
+		
+	</insert>
+	
+	<insert id="insertBoardFail" parameterType="com.spring.board.form.BoardForm">
+	
+		INSERT 
+		INTO PUSER.TB_BOARD 
+		(
+		  	  BOARD_RE_REF
+		  	, BOARD_RE_LEV
+		  	, BOARD_RE_SEQ
+		  	, BOARD_WRITER
+		  	, BOARD_SUBJECT
+		  	, BOARD_CONTENT
+		  	, INS_USER_ID
+		  	, INS_DATE
+		  	, UPD_USER_ID
+		  	, UPD_DATE
+		) 
+		VALUES 
+		(
+			  0
+			, 0
+			, 0
+			, #{board_writer1}
+			, #{board_subject}
+			, #{board_content}
+			, 'NONMEMBER'
+			, NOW() 
+			, 'NONMEMBER'
+			, NOW() 
+		)
+	
+	</insert>
+		
+	<delete id="deleteBoard" parameterType="com.spring.board.form.BoardForm">
+	
+		DELETE 
+		FROM PUSER.TB_BOARD 
+		WHERE BOARD_SEQ = #{board_seq}
+	
+	</delete>
+	
+	<delete id="updateBoard" parameterType="com.spring.board.form.BoardForm">
+	
+		UPDATE PUSER.TB_BOARD 
+		   SET BOARD_SUBJECT = #{board_subject}
+		     , BOARD_CONTENT = #{board_content}
+		     , UPD_USER_ID = 'NONMEMBER'
+		     , UPD_DATE = NOW()
+ 		WHERE BOARD_SEQ = #{board_seq}
+	
+	</delete>
+	
+	<select id="getBoardReplyInfo" parameterType="com.spring.board.form.BoardForm" resultType="com.spring.board.dto.BoardDto">
+	
+		SELECT BOARD_SEQ
+			 , BOARD_RE_REF
+			 , BOARD_RE_LEV
+			 , BOARD_RE_SEQ
+	    FROM TB_BOARD
+	    WHERE BOARD_SEQ = #{board_parent_seq}
+	
+	</select>
+	
+	<delete id="updateBoardReSeq" parameterType="com.spring.board.form.BoardForm">
+	
+		UPDATE TB_BOARD
+		   SET BOARD_RE_SEQ = BOARD_RE_SEQ + 1
+		     , UPD_USER_ID = 'NONMEMBER'
+		     , UPD_DATE = NOW()
+		 WHERE BOARD_RE_REF = #{board_re_ref} 
+	       AND BOARD_RE_SEQ > #{board_re_seq}
+	
+	</delete>
+	
+	<insert id="insertBoardReply" parameterType="com.spring.board.form.BoardForm">
+	
+		INSERT 
+		INTO PUSER.TB_BOARD 
+		(
+		  	  BOARD_RE_REF
+		  	, BOARD_RE_LEV
+		  	, BOARD_RE_SEQ
+		  	, BOARD_WRITER
+		  	, BOARD_SUBJECT
+		  	, BOARD_CONTENT
+		  	, INS_USER_ID
+		  	, INS_DATE
+		  	, UPD_USER_ID
+		  	, UPD_DATE
+		) 
+		VALUES 
+		(
+			  #{board_re_ref}
+			, #{board_re_lev} + 1
+			, #{board_re_seq} + 1
+			, #{board_writer}
+			, #{board_subject}
+			, #{board_content}
+			, 'NONMEMBER'
+			, NOW() 
+			, 'NONMEMBER'
+			, NOW() 
+		)
+	
+	</insert>
+	
+	<delete id="deleteBoardFile" parameterType="com.spring.board.form.BoardFileForm">
+	
+		UPDATE PUSER.TB_BOARD_FILE 
+		   SET DEL_YN = 'Y'
+		     , UPD_USER_ID = 'NONMEMBER'
+		     , UPD_DATE = NOW()
+ 		WHERE BOARD_SEQ = #{board_seq}
+ 		  AND FILE_NO = #{file_no}
+	
+	</delete>
+	
+	<insert id="getRegister" parameterType="com.spring.board.form.UserForm">
+	
+		INSERT INTO PUSER.USER (
+              userID
+            , userPassword
+            , userName
+            , userEmail
+            , userGender
+        ) VALUES (
+              #{userID}
+            , #{userPassword}
+            , #{userName}
+            , #{userEmail}
+            , #{userGender}
+        )
+	
+	</insert>
+	
+	<select id="getLogin" parameterType="com.spring.board.form.UserForm" resultType="com.spring.board.dto.UserDto">
+	
+		SELECT *
+	    FROM PUSER.USER
+	    WHERE userID = #{userID}
+	
+	</select>
+	
+	<select id="getUserList"  resultType="com.spring.board.dto.UserDto">
+	
+		SELECT userID
+            , userPassword
+            , userName
+            , userEmail
+            , userGender 
+		FROM PUSER.USER
+	
+	</select>
+	
+	
+	<select id="getMyPage"  parameterType="com.spring.board.form.UserForm" resultType="com.spring.board.dto.UserDto">
+	
+		SELECT userID
+            , userPassword
+            , userName
+            , userEmail
+            , userGender 
+		FROM PUSER.USER
+		WHERE userID != #{userID} 
+		AND userID != 'ADMIN'
+	
+	</select>
+	
+	<insert id="getFriend" parameterType="com.spring.board.form.UserForm">
+	
+		INSERT 
+		INTO PUSER.user_friend 
+		(
+		  	   userID
+		  	  ,userFriend
+		  	  ,DEL_YN
+		) 
+		VALUES 
+		(
+			 #{userID}
+			,#{userFriend}
+			,'N'
+		)
+	
+	</insert>
+	
+	<select id="getFriendList"  parameterType="com.spring.board.form.UserForm" resultType="com.spring.board.dto.UserDto">
+	
+		select userID 
+			,userFriend
+			,DEL_YN
+		from puser.user_friend
+		where userID = #{userID}
+		AND   DEL_YN = 'N'
+	
+	</select>
+	
+	<delete id="delFriend" parameterType="com.spring.board.form.UserForm" >
+	
+		UPDATE PUSER.user_friend 
+		   SET DEL_YN = 'Y'
+		     
+ 		WHERE userID = #{userID}
+		AND userFriend = #{userFriend}
+	</delete>
+	
+	<delete id="tgetFriend" parameterType="com.spring.board.form.UserForm" >
+	
+		UPDATE PUSER.user_friend 
+		   SET DEL_YN = 'N'
+		     
+ 		WHERE userID = #{userID}
+		AND userFriend = #{userFriend}
+	</delete>
+	
+	<select id="getFboardList" parameterType="com.spring.board.form.UserForm" resultType="com.spring.board.dto.BoardDto">
+	
+		SELECT BOARD_SEQ 
+				, BOARD_RE_REF 
+				, BOARD_RE_LEV 
+				, BOARD_RE_SEQ 
+				, BOARD_WRITER 
+				, BOARD_SUBJECT 
+				, BOARD_CONTENT 
+				, BOARD_HITS
+				, DEL_YN 
+				, INS_USER_ID
+				, CAST( DATE_FORMAT( INS_DATE, '%Y-%m-%d %H:%i:%s' ) AS CHAR(19) ) AS INS_DATE
+				, UPD_USER_ID
+				, CAST( DATE_FORMAT( UPD_DATE, '%Y-%m-%d %H:%i:%s' ) AS CHAR(19) ) AS UPD_DATE  
+			 FROM PUSER.TB_BOARD
+		     WHERE 	BOARD_WRITER = any(select userFriend from puser.user_friend where userID = #{userID}
+		     AND DEL_YN = 'N')
+		     ORDER BY board_seq DESC
+		     LIMIT #{limit} OFFSET #{offset}
+	</select>
+	
+	<select id="getFriendCnt" parameterType="com.spring.board.form.UserForm" resultType="int">
+	
+		SELECT COUNT(*)
+		FROM PUSER.TB_BOARD
+		WHERE 	BOARD_WRITER = any(select userFriend from puser.user_friend where userID = #{userID}
+		AND DEL_YN = 'N');
+
+	</select>
+	
+	<select id="getProfile" parameterType="com.spring.board.form.UserForm" resultType="com.spring.board.dto.UserDto">
+	
+		SELECT userID
+            , userPassword
+            , userName
+            , userEmail
+            , userGender 
+            , introContext
+		FROM PUSER.USER
+		WHERE userID = #{userID}
+	
+	</select>
+	
+	<update id="getIntroduce" parameterType="com.spring.board.form.UserForm">
+	
+		update puser.user
+		set introContext = #{introContext}
+		where userID = #{userID}
+	
+	</update>
+	
+	<select id="selectUser" parameterType="com.spring.board.form.UserForm" resultType="com.spring.board.dto.UserDto">
+		
+		select * from puser.user where userEmail=#{userEmail}
+
+	</select>
+	
+</mapper>

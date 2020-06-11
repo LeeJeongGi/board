@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.spring.board.UserMapper">
+
+    <insert id="getRegister" parameterType="com.spring.board.form.UserForm">
+        INSERT INTO user (
+            user_id
+            , user_pw
+            , user_name
+            , user_gender
+            , user_email
+        ) VALUES (
+            #{userId}
+            , #{userPassword}
+            , #{userName}
+            , #{userGender}
+            , #{userEmail}
+        )
+    </insert>
+    
+    <select id="login" parameterType="com.spring.board.form.UserForm" resultType="com.spring.board.dto.UserDto">
+    SELECT
+      *
+    FROM user
+    WHERE user_id = #{userId}
+</select>
+
+</mapper>
